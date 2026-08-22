@@ -1,0 +1,62 @@
+import { PolicyFooter, PolicyHeader } from "../policy-layout";
+
+const controls = [
+  ["01", "Define the proposed meaning", "Identify every person or organisation who may be identifiable and record the factual meanings a reasonable audience could take from the words, headline, images, editing and omissions."],
+  ["02", "Build a proposition-level evidence record", "Match every material factual proposition to first-hand knowledge, records or other reliable support. Repetition is logged but does not by itself establish truth."],
+  ["03", "Separate fact, allegation and opinion", "State verified facts as facts only when the evidence supports that treatment. Attribute allegations clearly. Label opinion and identify the material on which it is based."],
+  ["04", "Test source independence", "Check whether apparently separate accounts rely on the same incident, person, public post, group discussion or copied wording before counting them as independent."],
+  ["05", "Assess public interest and necessity", "Record why publication serves a legitimate public interest, why each identifying detail is necessary and whether the same purpose can be achieved with less reputational or privacy harm."],
+  ["06", "Offer a meaningful right of reply", "Give a person or organisation facing substantive criticism enough information to understand and answer it, a reasonable opportunity to respond and fair representation of the substance of the response."],
+  ["07", "Complete independent review", "High-risk material is reviewed for accuracy, context, source safety, privacy, fairness, consent and legal risk. Serious allegations are not published solely because they were submitted."],
+  ["08", "Correct and preserve", "Preserve the evidence, consent and decision record supporting publication. Correct material factual errors promptly and explain significant changes."],
+];
+
+const officialSources = [
+  ["Defamation Act 2005 (Victoria)", "https://www.legislation.vic.gov.au/in-force/acts/defamation-act-2005"],
+  ["Privacy Act 1988 and current compilations", "https://www.legislation.gov.au/C2004A03712/latest/text"],
+  ["Corporations Act 2001, Part 9.4AAA", "https://www.legislation.gov.au/C2004A00818/latest/text"],
+  ["ASIC whistleblower rights and protections", "https://asic.gov.au/about-asic/asic-investigations-and-enforcement/whistleblowing/whistleblower-rights-and-protections"],
+  ["OAIC small-business privacy guidance", "https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/organisations/small-business"],
+  ["OAIC APP 3 collection guidance", "https://www.oaic.gov.au/privacy/australian-privacy-principles/australian-privacy-principles-guidelines/chapter-3-app-3-collection-of-solicited-personal-information"],
+  ["OAIC APP 11 security guidance", "https://www.oaic.gov.au/privacy/australian-privacy-principles/australian-privacy-principles-guidelines/chapter-11-app-11-security-of-personal-information"],
+  ["Surveillance Devices Act 1999 (Victoria)", "https://www.legislation.vic.gov.au/in-force/acts/surveillance-devices-act-1999"],
+];
+
+export default function LegalPublicationPolicyPage() {
+  return <main>
+    <PolicyHeader />
+    <section className="policy-hero dark"><p className="kicker light">Australian legal and publication policy</p><h1>What we check before we publish</h1><p>This policy explains the legal risks we look for and the editorial checks we require. It is not legal advice, a guarantee that a publication is lawful or a waiver of anyone&apos;s rights.</p></section>
+
+    <section className="legal-policy-intro"><div><p className="kicker">What a disclaimer cannot do</p><h2>Calling something an allegation does not make it safe to publish</h2></div><div><p>Defamation risk depends on the meaning conveyed, who is identifiable, the evidence, serious harm, jurisdiction and whether a defence can be proved from the reporting conduct. Removing a name or adding a disclaimer does not automatically make a publication lawful.</p><p>That is why we treat each submission as a confidential research lead. Consent, anonymity and an evidence tag do not, by themselves, authorise publication.</p></div></section>
+
+    <section className="publication-controls"><div className="section-intro"><p className="kicker">Before substantive claims are published</p><h2>Checks we do not skip</h2></div><div className="process-list">{controls.map(([number, title, copy]) => <article key={number}><span>{number}</span><div><h2>{title}</h2><p>{copy}</p></div></article>)}</div></section>
+
+    <section className="law-framework"><div className="section-intro"><p className="kicker light">Defamation in Australia</p><h2>Public interest is not a permission slip</h2></div><div className="law-grid">
+      <article><h3>Serious harm and identification</h3><p>Australian states and territories have substantially uniform defamation statutes, but jurisdiction and transitional differences matter. Serious harm is an element of the cause of action in the amended model provisions. The threshold does not make a weakly sourced publication safe.</p><p>A person can be identifiable without being named. Role, location, timing, images, quotations or contextual clues can be enough when readers can connect the material to them.</p></article>
+      <article><h3>Defences require evidence</h3><p>Potential defences may include substantial truth, contextual truth, publication concerning an issue of public interest, qualified privilege, honest opinion and fair reporting of proceedings of public concern. Each has distinct requirements.</p><p>Public-interest assessment can consider the seriousness of the meaning, separation of allegation from proven fact, source integrity, verification and whether the subject&apos;s response was sought and represented fairly.</p></article>
+      <article><h3>Companies and named people</h3><p>Many larger for-profit corporations cannot sue in defamation under the uniform statutes, but that does not remove publication risk. Identifiable individuals may sue, some corporations qualify as excluded corporations and other claims or remedies may apply.</p><p>Any proposal to name a manager, employee, contributor or other individual in connection with serious criticism requires necessity, strong evidence, right of reply, privacy review and Australian media-law advice.</p></article>
+      <article><h3>Concerns notices and corrections</h3><p>Australian defamation procedure includes formal concerns-notice and offer-to-make-amends processes. Complaints must be preserved, assessed promptly and escalated for legal advice. Corrections should be proportionate, visible and not quietly rewritten where the change is material.</p></article>
+    </div></section>
+
+    <section className="principles-section" id="contributor-legal-limits"><div className="section-intro"><p className="kicker">Before you contribute</p><h2>What this project cannot promise you</h2></div><div className="principle-grid">
+      <article><span>01</span><h2>Whistleblower protection</h2><p>Inside MECCA is not claiming to be an eligible recipient under the Corporations Act. Protection depends on the discloser, subject matter, recipient and statutory steps. Personal work-related grievances may be excluded in some circumstances.</p></article>
+      <article><span>02</span><h2>External disclosures</h2><p>Corporations Act protection for public-interest or emergency disclosure to a journalist or parliamentarian has strict preconditions, including an earlier qualifying disclosure to ASIC or APRA and written notice. The statutory journalist definition may not cover this project. Contributors should not rely on this pathway without independent legal advice.</p></article>
+      <article><span>03</span><h2>Confidentiality and privilege</h2><p>The project restricts contributor identity, but cannot promise absolute secrecy, legal professional privilege or immunity from a valid legal demand, security incident or re-identification from surrounding facts.</p></article>
+      <article><span>04</span><h2>Recordings and documents</h2><p>Surveillance, recording, confidentiality and communication laws vary by state and territory. Do not secretly record, access, remove or send material unless you are legally entitled to do so. Possessing a document does not automatically authorise publication.</p></article>
+    </div></section>
+
+    <section className="law-framework"><div className="section-intro"><p className="kicker light">Privacy and personal information</p><h2>Collect less, keep identities separate and be honest about the limits</h2></div><div className="law-grid">
+      <article><h3>Privacy Act coverage</h3><p>Whether the Privacy Act applies to this project depends on facts including organisational status, turnover and statutory exceptions. The project does not assume an exemption or claim coverage without advice. It voluntarily uses practices modelled on the Australian Privacy Principles.</p></article>
+      <article><h3>Sensitive information</h3><p>Workplace accounts may include health, disability, racial or ethnic origin, union membership and other sensitive information. The form requests express consent for what a contributor chooses to provide and instructs contributors to minimise third-party details.</p></article>
+      <article><h3>Security and retention</h3><p>Access is restricted and retention periods are published. Information no longer needed should be securely destroyed or de-identified, subject to documented legal or editorial preservation needs. De-identification reduces but does not eliminate re-identification risk.</p></article>
+      <article><h3>Serious invasions of privacy</h3><p>Schedule 2 of the Privacy Act establishes a statutory tort for serious invasions of privacy, including serious intentional or reckless intrusion upon seclusion or misuse of information where a reasonable expectation of privacy exists. Public-interest balancing and any exemption require case-specific legal analysis.</p></article>
+    </div></section>
+
+    <section className="concerns-section"><div><p className="kicker">Official legal sources</p><h2>Use the current law, not a summary alone</h2></div><div><p>These sources were reviewed on 11 August 2026. Laws and guidance change, and the version that applies to a particular event or publication may be different.</p><ul>{officialSources.map(([title, href]) => <li key={title}><a href={href} target="_blank" rel="noreferrer">{title}</a></li>)}</ul></div></section>
+
+    <section className="concerns-section"><div><p className="kicker">Concerns, replies and corrections</p><h2>Tell us if proposed or published material is wrong or unfair</h2></div><div><p>Identify the material, explain your concern, provide supporting information and tell us whether you are asking for a response, correction, clarification or removal.</p><p>We assess requests promptly. Relevant records may still need to be preserved for legal, editorial or safety reasons.</p><a className="button primary" href="mailto:insidemecca@mail2australia.com?subject=Legal%20concern%2C%20reply%20or%20correction">Submit a legal concern or reply</a></div></section>
+
+    <section className="legal-warning"><strong>Important</strong><p>Before naming an individual, publishing a serious allegation, sending a detailed right-of-reply letter or releasing documentary material, the project should obtain confidential advice from an Australian media lawyer. Cross-border material requires advice for every material publication jurisdiction.</p></section>
+    <PolicyFooter />
+  </main>;
+}

@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { CollectionPage } from "../collection-page";
+import { publicClaims } from "../data";
+
+export default function Page(){return <CollectionPage label="Research Centre / Public statements" title="What was said publicly" intro="This register records public-facing statements, who made them and what evidence would be needed to assess them." records={publicClaims} notice="A company statement proves that the identified source said something. It does not prove that the statement was accurate, remained current or matched every employee's experience." featured={<section className="rc-featured-investigation"><p className="rb-kicker">Start here</p><div><h2>What happened to the workplace-culture review announced in 2019?</h2><p>This investigation traces the @estéelaundry reports, employee accounts published by news organisations, MECCA&apos;s response, the review it announced, later governance evidence and the questions that remain unanswered.</p><Link className="rb-button red" href="/research-centre/public-claims/2019-workplace-culture">Read the investigation</Link></div></section>}/>}

@@ -1,0 +1,6 @@
+{
+  "name": "Inside MECCA Investigation",
+  "description": "Public research and community reporting platform investigating workplace culture, safety, and accountability.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

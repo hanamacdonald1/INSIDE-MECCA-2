@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,follow">
+<title>The @estéelaundry MECCA Scandal — Interactive Data Map</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root{
+    --bg:#170a13;
+    --panel:#22101c;
+    --panel-2:#2c1524;
+    --border:#4a2740;
+    --text:#fbe9f2;
+    --muted:#d391b5;
+    --accent:#ff2d78;
+    --verified:#ff2d78;
+    --reported:#00d4ff;
+    --alleged:#ffb800;
+    --social:#7c3aed;
+    --opinion:#00e0a0;
+    --node-org:#ff2d78;
+    --node-person:#00d4ff;
+    --node-media:#ffb800;
+    --node-legal:#7c3aed;
+    --node-social:#00e0a0;
+    --node-event:#ff7a1a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;height:100%;}
+  #app{display:flex;flex-direction:column;height:100vh;min-height:640px;}
+
+  header{
+    padding:18px 24px 14px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#251320,#170a13);
+  }
+  header h1{margin:0 0 4px;font-size:19px;font-weight:600;letter-spacing:.2px;}
+  header p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.5;max-width:920px;}
+  .tabs{display:flex;gap:6px;margin-top:12px;}
+  .tab-btn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--muted);
+    padding:6px 14px;border-radius:20px;font-size:12.5px;cursor:pointer;transition:.15s;
+  }
+  .tab-btn.active{background:var(--accent);color:#2c0a1e;border-color:var(--accent);font-weight:600;}
+  .tab-btn:hover:not(.active){color:var(--text);border-color:#454b60;}
+
+  .layout{flex:1;display:flex;min-height:0;}
+  .sidebar{
+    width:260px;flex:0 0 260px;border-right:1px solid var(--border);
+    padding:16px;overflow-y:auto;background:var(--panel);
+  }
+  .sidebar h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px;}
+  .sidebar h3:first-child{margin-top:0;}
+  .legend-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12.5px;user-select:none;}
+  .legend-row:hover{background:var(--panel-2);}
+  .legend-row.off{opacity:.35;}
+  .dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;}
+  .swatch{width:12px;height:12px;border-radius:3px;flex:0 0 12px;border:2px solid;}
+  input#search{
+    width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);font-size:13px;margin-bottom:4px;
+  }
+  input#search:focus{outline:none;border-color:var(--accent);}
+  .reset-btn{
+    margin-top:10px;width:100%;padding:7px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-size:12px;cursor:pointer;
+  }
+  .reset-btn:hover{color:var(--text);border-color:var(--accent);}
+
+  .main{flex:1;position:relative;min-width:0;overflow:hidden;}
+  #graph-view, #timeline-view{position:absolute;inset:0;overflow:auto;}
+  #timeline-view{display:none;}
+  svg{width:100%;height:100%;display:block;cursor:grab;}
+  svg:active{cursor:grabbing;}
+
+  .node circle{stroke-width:2px;cursor:pointer;transition:opacity .15s;}
+  .node text{
+    fill:var(--text);font-size:10.5px;pointer-events:none;paint-order:stroke;
+    stroke:#170a13;stroke-width:3px;
+  }
+  .link{stroke-width:1.6px;fill:none;opacity:.55;}
+  .link-label{font-size:9px;fill:var(--muted);pointer-events:none;}
+  .dimmed{opacity:.08 !important;}
+
+  .detail-panel{
+    position:absolute;top:16px;right:16px;width:340px;max-height:calc(100% - 32px);
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;
+    padding:18px;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.45);
+    display:none;
+  }
+  .detail-panel.show{display:block;}
+  .detail-panel .close-x{
+    position:absolute;top:12px;right:14px;cursor:pointer;color:var(--muted);font-size:16px;
+  }
+  .detail-panel .close-x:hover{color:var(--text);}
+  .detail-panel h2{font-size:16px;margin:0 26px 4px 0;}
+  .detail-panel .type-tag{
+    display:inline-block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);margin-bottom:10px;
+  }
+  .detail-panel .desc{font-size:13px;line-height:1.55;color:#d6d8e2;margin-bottom:12px;}
+  .ev-badge{
+    display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;
+    margin-bottom:12px;letter-spacing:.03em;
+  }
+  .detail-panel .src-list{list-style:none;padding:0;margin:0;font-size:12px;}
+  .detail-panel .src-list li{margin-bottom:7px;padding-left:14px;position:relative;}
+  .detail-panel .src-list li:before{content:"—";position:absolute;left:0;color:var(--muted);}
+  .detail-panel a{color:var(--reported);text-decoration:none;}
+  .detail-panel a:hover{text-decoration:underline;}
+  .conn-list{font-size:12px;color:var(--muted);margin-top:10px;}
+  .conn-list b{color:var(--text);font-weight:500;}
+
+  .hint{
+    position:absolute;bottom:16px;left:16px;font-size:11px;color:var(--muted);
+    background:rgba(23,26,35,.85);padding:6px 10px;border-radius:8px;border:1px solid var(--border);
+  }
+
+  /* Timeline */
+  #timeline-view{padding:28px 40px 60px;}
+  .tl-wrap{position:relative;max-width:900px;margin:0 auto;}
+  .tl-line{position:absolute;left:130px;top:0;bottom:0;width:2px;background:var(--border);}
+  .tl-item{position:relative;display:flex;gap:20px;padding-bottom:26px;}
+  .tl-date{width:110px;flex:0 0 110px;text-align:right;font-size:11.5px;color:var(--muted);padding-top:2px;}
+  .tl-dot-wrap{position:relative;width:20px;flex:0 0 20px;display:flex;justify-content:center;}
+  .tl-dot{width:12px;height:12px;border-radius:50%;margin-top:4px;border:2px solid var(--bg);z-index:2;}
+  .tl-content{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .tl-content h4{margin:0 0 4px;font-size:13.5px;}
+  .tl-content p{margin:0 0 6px;font-size:12px;color:var(--muted);line-height:1.5;}
+  .tl-content a{font-size:11.5px;color:var(--reported);text-decoration:none;}
+  .tl-content a:hover{text-decoration:underline;}
+
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#2b3040;border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  footer{
+    padding:9px 24px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);
+    background:var(--panel);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>The @estéelaundry MECCA Scandal — Interactive Data Map</h1>
+    <p>A visual map of the entities, allegations, media coverage, legal actions and evidence trail from October 2019 to August 2026. Every node and connection is colour-coded by evidence class — verified fact, reported allegation, unproven allegation, or anonymous social media commentary. Click any node for detail and sources.</p>
+    <div class="tabs">
+      <button class="tab-btn active" data-view="graph">Network map</button>
+      <button class="tab-btn" data-view="timeline">Timeline</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar">
+      <input id="search" type="text" placeholder="Search entities…">
+
+      <h3>Evidence class</h3>
+      <div class="legend" id="evidence-legend"></div>
+
+      <h3>Entity type</h3>
+      <div class="legend" id="type-legend"></div>
+
+      <button class="reset-btn" id="reset-btn">Reset filters &amp; view</button>
+
+      <h3>About this map</h3>
+      <p style="font-size:11.5px;color:var(--muted);line-height:1.6;">
+        Compiled from the "Inside MECCA Research Hub" investigation (4 Aug 2026). Anonymous testimony and social media commentary are never presented as verified fact — see evidence classes.
+      </p>
+    </div>
+
+    <div class="main">
+      <div id="graph-view">
+        <svg id="graph-svg"></svg>
+        <div class="hint">Scroll to zoom · Drag nodes or canvas · Click a node for details</div>
+      </div>
+      <div id="timeline-view"></div>
+
+      <div class="detail-panel" id="detail-panel">
+        <span class="close-x" id="detail-close">✕</span>
+        <div id="detail-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Sources: SMH, AFR, Yahoo Finance Australia, Pedestrian.TV, Lawyerly, news.com.au, ASIC, Fair Work Commission, Modern Slavery Register, Reddit r/AustralianMakeup. Report date 4 August 2026.</footer>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------
+   DATA
+--------------------------------------------------------------------- */
+const EVIDENCE = {
+  VERIFIED:   {label:"Verified",        color:"#ff2d78"},
+  REPORTED:   {label:"Reported",        color:"#00d4ff"},
+  ALLEGED:    {label:"Alleged",         color:"#ffb800"},
+  SOCIAL:     {label:"Social media",    color:"#7c3aed"},
+  OPINION:    {label:"Opinion",         color:"#00e0a0"}
+};
+
+const TYPES = {
+  org:    {label:"Organisation / account", color:"#ff2d78"},
+  person: {label:"Named / anonymous person", color:"#00d4ff"},
+  media:  {label:"Media outlet",           color:"#ffb800"},
+  legal:  {label:"Regulator / tribunal",   color:"#7c3aed"},
+  social: {label:"Social media platform",  color:"#00e0a0"},
+  event:  {label:"Event / allegation",     color:"#ff7a1a"}
+};
+
+const nodes = [
+  {id:"mecca", label:"MECCA Brands", type:"org", ev:"VERIFIED", r:26,
+    desc:"Australian beauty retail chain founded by Jo Horgan. Subject of the @estéelaundry bullying allegations (Oct 2019), a $560k underpayment disclosure (2023), a maternity-leave redundancy lawsuit (2024), and ASIC infringement notices (2026).",
+    sources:[]},
+  {id:"esteelaundry", label:"@estéelaundry", type:"org", ev:"SOCIAL", r:20,
+    desc:"Anonymous, faceless Instagram watchdog account created in 2018, ~129,000 followers by Nov 2019. Posted 50+ accounts from people claiming to be current/former MECCA employees alleging bullying, racism and favouritism. Operator identity never publicly confirmed.",
+    sources:[{t:"SMH, 22 Nov 2019 — profile of the account",u:"https://www.smh.com.au/lifestyle/beauty/behind-the-anonymous-instagram-account-airing-the-beauty-industry-s-dirty-laundry-20191122-p53d5x.html"}]},
+  {id:"jo_horgan", label:"Jo Horgan", type:"person", ev:"VERIFIED", r:15,
+    desc:"MECCA founder/CEO. Sent multiple staff emails acknowledging the allegations, stated only 0.2% of retail staff had made a bullying complaint in the prior two years, and announced the culture review, STOPLINE and training.",
+    sources:[{t:"SMH, 17 Nov 2019",u:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"},{t:"Yahoo Finance, 19 Nov 2019",u:"https://au.finance.yahoo.com/news/mecca-investigation-011344896.html"}]},
+  {id:"narita", label:"Narita Salima", type:"person", ev:"REPORTED", r:13,
+    desc:"Named former retail worker (joined 2016, age 22). Said managers bullied and ridiculed her in front of customers: \"That whole MECCA culture, that positive workplace, it's just so fake.\" Raised bullying concerns to her manager; was fired shortly after.",
+    sources:[{t:"SMH, 17 Nov 2019",u:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"}]},
+  {id:"anon_ho", label:"Anonymous head-office employee", type:"person", ev:"REPORTED", r:12,
+    desc:"Described the environment as \"cult-like.\" Says she was told to resign despite no performance issues: \"I was shocked.\"",
+    sources:[{t:"SMH, 17 Nov 2019",u:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"}]},
+  {id:"anon_mua", label:"Anonymous former makeup artist", type:"person", ev:"REPORTED", r:12,
+    desc:"Said constant \"bullying and belittlement\" led her to see a psychologist: \"I already had anxiety and [MECCA] made it so much worse.\"",
+    sources:[{t:"SMH, 17 Nov 2019",u:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"}]},
+  {id:"tegan", label:'"Tegan" (colour & skin specialist, 4.5 yrs)', type:"person", ev:"REPORTED", r:13,
+    desc:"Called MECCA's review \"window dressing,\" said the listening tour session she volunteered for was \"at capacity,\" and predicted the review would end with a perfunctory email from Jo Horgan. Said problems \"stem from top down.\"",
+    sources:[{t:"Pedestrian.TV, 9 Dec 2019",u:"https://www.pedestrian.tv/news/mecca-employees-zero-hope-review-alleged-bullying-will-bring-change/"}]},
+  {id:"lisa", label:'"Lisa" (assistant manager, since 2016)', type:"person", ev:"REPORTED", r:13,
+    desc:"Said staff were told not to discuss the allegations and feared retaliation if she joined the listening tour: \"I feel like it's a trap.\" Said MECCA pushes out staff who \"don't fit in.\"",
+    sources:[{t:"Pedestrian.TV, 9 Dec 2019",u:"https://www.pedestrian.tv/news/mecca-employees-zero-hope-review-alleged-bullying-will-bring-change/"}]},
+  {id:"vanessa", label:"Vanessa Freeman (CPO)", type:"person", ev:"VERIFIED", r:13,
+    desc:"MECCA's Chief People Officer. Apologised over the 2023 underpayment disclosure. Also the source of MECCA's current unsupported claim of \"exceptional tenure and loyalty\" (WGEA gender pay page) — independent data shows median tenure of 2.5 years.",
+    sources:[{t:"AFR, 23 Mar 2023",u:"https://www.afr.com/work-and-careers/workplace/beauty-giant-mecca-underpaid-staff-on-17-year-old-zombie-agreements-20230323-p5cuo3"}]},
+  {id:"smh", label:"Sydney Morning Herald", type:"media", ev:"REPORTED", r:16,
+    desc:"Published the two key 2019 investigative pieces: the 17 Nov article naming Narita Salima and detailing allegations, and the 22 Nov profile of @estéelaundry itself.",
+    sources:[{t:"\"It's all fake\": beauty giant MECCA facing bullying claims",u:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"},{t:"Behind the anonymous Instagram account",u:"https://www.smh.com.au/lifestyle/beauty/behind-the-anonymous-instagram-account-airing-the-beauty-industry-s-dirty-laundry-20191122-p53d5x.html"}]},
+  {id:"yahoo", label:"Yahoo Finance Australia", type:"media", ev:"REPORTED", r:12,
+    desc:"Reported on the MECCA investigation and Jo Horgan's staff emails, 19 Nov 2019.",
+    sources:[{t:"MECCA investigation",u:"https://au.finance.yahoo.com/news/mecca-investigation-011344896.html"}]},
+  {id:"pedestrian", label:"Pedestrian.TV", type:"media", ev:"REPORTED", r:13,
+    desc:"Published the December 2019 follow-up with two pseudonymous employees (\"Tegan\" and \"Lisa\") expressing scepticism about the culture review's genuineness.",
+    sources:[{t:"MECCA employees have zero hope the review will bring change",u:"https://www.pedestrian.tv/news/mecca-employees-zero-hope-review-alleged-bullying-will-bring-change/"}]},
+  {id:"afr", label:"Australian Financial Review", type:"media", ev:"VERIFIED", r:14,
+    desc:"Broke the March 2023 story that MECCA underpaid ~1,600 staff $560,000 due to 17-year-old \"zombie\" enterprise agreements.",
+    sources:[{t:"MECCA underpaid staff on 17-year-old zombie agreements",u:"https://www.afr.com/work-and-careers/workplace/beauty-giant-mecca-underpaid-staff-on-17-year-old-zombie-agreements-20230323-p5cuo3"}]},
+  {id:"payroll_assoc", label:"Australian Payroll Association", type:"media", ev:"REPORTED", r:10,
+    desc:"Industry publication that also reported on the $560,000 underpayment disclosure.",
+    sources:[{t:"Beauty retailer MECCA discovers it owes staff $560,000",u:"https://www.austpayroll.com.au/beauty-retailer-mecca-discovers-it-owes-staff-560000/"}]},
+  {id:"lawyerly", label:"Lawyerly", type:"media", ev:"REPORTED", r:11,
+    desc:"Legal news outlet that broke the February 2024 maternity-leave redundancy lawsuit against MECCA and its CMO.",
+    sources:[{t:"MECCA used maternity leave to test whether exec's position could be axed",u:"https://www.lawyerly.com.au/mecca-brands-used-maternity-leave-to-test-whether-execs-position-could-be-axed-lawsuit-says/"}]},
+  {id:"newscomau", label:"news.com.au", type:"media", ev:"REPORTED", r:11,
+    desc:"Also reported the February 2024 maternity-leave redundancy lawsuit.",
+    sources:[{t:"MECCA sued over maternity leave redundancy",u:"https://www.news.com.au/finance/work/at-work/mecca-sued-over-maternity-leave-redundancy/news-story/32b689d370fda8bb1db4c3747cb8de4e"}]},
+  {id:"youtube_doc", label:'YouTube documentary — "Loyalty and labour…"', type:"media", ev:"REPORTED", r:12,
+    desc:"February 2026 documentary stating MECCA \"has faced a handful of legal actions from former employees both in the Federal Court and VCAT.\" Specific cases not independently verified in the underlying research.",
+    sources:[{t:"Loyalty and labour in the brutal business of beauty",u:"https://www.youtube.com/watch?v=0FT0X0Kw2fY"}]},
+  {id:"fwc", label:"Fair Work Commission", type:"legal", ev:"VERIFIED", r:15,
+    desc:"Tribunal that heard Mekuria v MECCA Brands Pty Ltd [2019] FWCFB 1093 (19 Feb 2019) — a procedural decision on legal representation. Existence confirmed via FWC's own published guidance; substantive outcome not publicly disclosed. FWC's anti-bullying jurisdiction also requires a *current* employee to apply.",
+    sources:[{t:"FWC representation guidance",u:"https://www.fwc.gov.au/representation-lawyers-and-paid-agents-0"}]},
+  {id:"fwo", label:"Fair Work Ombudsman", type:"legal", ev:"VERIFIED", r:13,
+    desc:"MECCA self-reported the 2023 underpayment to the FWO. This was a company-commissioned audit, not an FWO enforcement finding — no infringement notice, enforceable undertaking or litigation from FWO has been found.",
+    sources:[]},
+  {id:"asic", label:"ASIC", type:"legal", ev:"VERIFIED", r:14,
+    desc:"Issued $594,000 in infringement notices to three MECCA entities on 26 March 2026 for failing to lodge financial reports on time.",
+    sources:[{t:"ASIC media release 26-057MR",u:"https://asic.gov.au/about-asic/news-centre/find-a-media-release/2026-releases/26-057mr-mecca-companies-pay-594-000-in-infringement-notices-for-failing-to-lodge-financial-reports-on-time/"}]},
+  {id:"fedcourt_vcat", label:"Federal Court / VCAT actions", type:"legal", ev:"REPORTED", r:12,
+    desc:"Referenced in the 2026 YouTube documentary as \"a handful of legal actions from former employees.\" Specific cases have not been independently identified — further AustLII/FWC searches needed.",
+    sources:[]},
+  {id:"reddit", label:"Reddit — r/AustralianMakeup", type:"social", ev:"SOCIAL", r:17,
+    desc:"Recurring anonymous discussion threads (2019–2026) documenting employee/customer accounts of bullying, racism, casual-worker exploitation, and management practices at MECCA. All anonymous and unverified.",
+    sources:[{t:"MECCA coming under fire from Estée Laundry's IG stories, 26 Oct 2019",u:"https://www.reddit.com/r/AustralianMakeup/comments/dn8i9t/mecca_coming_under_fire_from_estee_laundrys_ig/"}]},
+  {id:"culture_review", label:"Independent culture review (2019–20)", type:"event", ev:"VERIFIED", r:15,
+    desc:"External HR consultant engaged after the allegations; included a store \"listening tour.\" Extended into January 2020. Findings, recommendations and the consultant's identity have never been publicly released — confirmed by absence of any such publication.",
+    sources:[]},
+  {id:"stopline", label:"STOPLINE hotline", type:"event", ev:"VERIFIED", r:11,
+    desc:"Anonymous complaints hotline established Nov 2019 as part of MECCA's response; referenced as an ongoing channel in the 2020 Modern Slavery Statement.",
+    sources:[{t:"Modern Slavery Statement 2020",u:"https://modernslaveryregister.gov.au/statements/7CwzBinQ2U2Esx7/pdf/"}]},
+  {id:"underpayment", label:"2023 underpayment disclosure", type:"event", ev:"VERIFIED", r:16,
+    desc:"MECCA disclosed underpaying ~1,600 current/former staff a total of $560,000 (Jul 2016–Jul 2022) due to 17-year-old \"zombie\" enterprise agreements. Back-paid staff with interest and super; median amount owed $153.",
+    sources:[{t:"AFR, 23 Mar 2023",u:"https://www.afr.com/work-and-careers/workplace/beauty-giant-mecca-underpaid-staff-on-17-year-old-zombie-agreements-20230323-p5cuo3"}]},
+  {id:"mat_leave_suit", label:"2024 maternity-leave lawsuit", type:"event", ev:"VERIFIED", r:14,
+    desc:"Former head of brand marketing sued MECCA and its CMO, alleging her maternity leave was used as a \"test\" of whether her role could be made redundant. Reported settled March 2024 (not independently confirmed via court records).",
+    sources:[{t:"Lawyerly, 21 Feb 2024",u:"https://www.lawyerly.com.au/mecca-brands-used-maternity-leave-to-test-whether-execs-position-could-be-axed-lawsuit-says/"},{t:"Settlement reported, LinkedIn 1 Mar 2024",u:"https://www.linkedin.com/posts/angelica-snowden-15888466_ex-mecca-employee-settles-mat-leave-redundancy-activity-7169193238300483585-V-z8"}]},
+  {id:"boycott", label:"2026 boycott call", type:"event", ev:"SOCIAL", r:12,
+    desc:"3 August 2026 Reddit post calling for a MECCA boycott, citing bullying/exclusion, absence of performance reviews, and the accumulated public record on MECCA's workplace culture.",
+    sources:[{t:"Reddit, 3 Aug 2026",u:"https://www.reddit.com/r/AustralianMakeup/comments/1ve8s2d/be_part_of_the_change_join_the_mecca_bycott_today/"}]},
+  {id:"best_places", label:"Best Places to Work (2014–2018)", type:"event", ev:"VERIFIED", r:11,
+    desc:"MECCA ranked on the Great Place to Work / AFR Best Places to Work list for five consecutive years through 2018 (5th among 1,000+ employee orgs), then dropped off entirely after the 2019 scandal.",
+    sources:[{t:"Inside Retail, 30 Aug 2018",u:"https://insideretail.com.au/news/mecca-loccitane-named-best-places-to-work-201808"}]}
+];
+
+const links = [
+  {source:"mecca", target:"esteelaundry", label:"allegations posted against", ev:"ALLEGED"},
+  {source:"esteelaundry", target:"smh", label:"covered by", ev:"REPORTED"},
+  {source:"narita", target:"smh", label:"named testimony", ev:"REPORTED"},
+  {source:"anon_ho", target:"smh", label:"anonymous testimony", ev:"REPORTED"},
+  {source:"anon_mua", target:"smh", label:"anonymous testimony", ev:"REPORTED"},
+  {source:"mecca", target:"jo_horgan", label:"CEO responds", ev:"VERIFIED"},
+  {source:"jo_horgan", target:"culture_review", label:"commissioned", ev:"VERIFIED"},
+  {source:"jo_horgan", target:"stopline", label:"established", ev:"VERIFIED"},
+  {source:"jo_horgan", target:"yahoo", label:"statements reported", ev:"REPORTED"},
+  {source:"pedestrian", target:"tegan", label:"pseudonymous source", ev:"REPORTED"},
+  {source:"pedestrian", target:"lisa", label:"pseudonymous source", ev:"REPORTED"},
+  {source:"tegan", target:"culture_review", label:"scepticism", ev:"REPORTED"},
+  {source:"lisa", target:"culture_review", label:"scepticism", ev:"REPORTED"},
+  {source:"mecca", target:"underpayment", label:"disclosed", ev:"VERIFIED"},
+  {source:"underpayment", target:"fwo", label:"self-reported to", ev:"VERIFIED"},
+  {source:"afr", target:"underpayment", label:"broke the story", ev:"VERIFIED"},
+  {source:"payroll_assoc", target:"underpayment", label:"reported on", ev:"REPORTED"},
+  {source:"vanessa", target:"underpayment", label:"apologised for", ev:"VERIFIED"},
+  {source:"mecca", target:"fwc", label:"Mekuria v MECCA (2019)", ev:"VERIFIED"},
+  {source:"mecca", target:"mat_leave_suit", label:"sued over", ev:"VERIFIED"},
+  {source:"lawyerly", target:"mat_leave_suit", label:"broke the story", ev:"REPORTED"},
+  {source:"newscomau", target:"mat_leave_suit", label:"reported on", ev:"REPORTED"},
+  {source:"mecca", target:"asic", label:"fined by (2026)", ev:"VERIFIED"},
+  {source:"mecca", target:"fedcourt_vcat", label:"\"handful\" of actions", ev:"REPORTED"},
+  {source:"youtube_doc", target:"fedcourt_vcat", label:"referenced", ev:"REPORTED"},
+  {source:"mecca", target:"reddit", label:"ongoing discourse", ev:"SOCIAL"},
+  {source:"reddit", target:"boycott", label:"led to call for", ev:"SOCIAL"},
+  {source:"mecca", target:"best_places", label:"ranked on (2014–18)", ev:"VERIFIED"},
+  {source:"esteelaundry", target:"reddit", label:"discussed on", ev:"SOCIAL"}
+];
+
+const nodeById = Object.fromEntries(nodes.map(n=>[n.id,n]));
+
+/* ---------------------------------------------------------------------
+   FILTER STATE
+--------------------------------------------------------------------- */
+const state = {
+  evOn: Object.fromEntries(Object.keys(EVIDENCE).map(k=>[k,true])),
+  typeOn: Object.fromEntries(Object.keys(TYPES).map(k=>[k,true])),
+  search: ""
+};
+
+function nodeVisible(n){
+  if(!state.typeOn[n.type]) return false;
+  if(!state.evOn[n.ev]) return false;
+  if(state.search && !n.label.toLowerCase().includes(state.search.toLowerCase())) return false;
+  return true;
+}
+
+/* ---------------------------------------------------------------------
+   SIDEBAR: legends
+--------------------------------------------------------------------- */
+const evLegend = d3.select("#evidence-legend");
+Object.entries(EVIDENCE).forEach(([key,v])=>{
+  const row = evLegend.append("div").attr("class","legend-row").attr("data-key",key)
+    .on("click", ()=>{ state.evOn[key] = !state.evOn[key]; row.classed("off", !state.evOn[key]); render(); });
+  row.append("div").attr("class","dot").style("background", v.color);
+  row.append("div").text(v.label);
+});
+
+const typeLegend = d3.select("#type-legend");
+Object.entries(TYPES).forEach(([key,v])=>{
+  const row = typeLegend.append("div").attr("class","legend-row").attr("data-key",key)
+    .on("click", ()=>{ state.typeOn[key] = !state.typeOn[key]; row.classed("off", !state.typeOn[key]); render(); });
+  row.append("div").attr("class","swatch").style("border-color", v.color).style("background","transparent");
+  row.append("div").text(v.label);
+});
+
+d3.select("#search").on("input", function(){ state.search = this.value; render(); });
+d3.select("#reset-btn").on("click", ()=>{
+  Object.keys(state.evOn).forEach(k=>state.evOn[k]=true);
+  Object.keys(state.typeOn).forEach(k=>state.typeOn[k]=true);
+  state.search="";
+  d3.select("#search").property("value","");
+  d3.selectAll(".legend-row").classed("off", false);
+  hideDetail();
+  render();
+  resetZoom();
+});
+
+/* ---------------------------------------------------------------------
+   GRAPH
+--------------------------------------------------------------------- */
+const svg = d3.select("#graph-svg");
+const gRoot = svg.append("g");
+const linkGroup = gRoot.append("g").attr("class","links");
+const nodeGroup = gRoot.append("g").attr("class","nodes-g");
+
+let width = 900, height = 700;
+function measure(){
+  const box = document.getElementById("graph-view").getBoundingClientRect();
+  width = box.width; height = box.height;
+}
+measure();
+
+const zoomBehavior = d3.zoom().scaleExtent([0.25,3]).on("zoom", (ev)=>{ gRoot.attr("transform", ev.transform); });
+svg.call(zoomBehavior);
+function resetZoom(){ svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity); }
+
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d=>d.id).distance(l => 90 + (nodeById[l.source.id||l.source]?.r||15) ).strength(0.55))
+  .force("charge", d3.forceManyBody().strength(-380))
+  .force("center", d3.forceCenter(width/2, height/2))
+  .force("collision", d3.forceCollide().radius(d=>d.r+18));
+
+const linkSel = linkGroup.selectAll(".link")
+  .data(links)
+  .join("line")
+  .attr("class","link")
+  .attr("stroke", d=>EVIDENCE[d.ev].color);
+
+const linkLabelSel = linkGroup.selectAll(".link-label")
+  .data(links)
+  .join("text")
+  .attr("class","link-label")
+  .text(d=>d.label);
+
+const nodeSel = nodeGroup.selectAll(".node")
+  .data(nodes)
+  .join("g")
+  .attr("class","node")
+  .call(d3.drag()
+    .on("start", (ev,d)=>{ if(!ev.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on("drag", (ev,d)=>{ d.fx=ev.x; d.fy=ev.y; })
+    .on("end", (ev,d)=>{ if(!ev.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }))
+  .on("click", (ev,d)=>{ ev.stopPropagation(); showDetail(d); highlight(d); });
+
+nodeSel.append("circle")
+  .attr("r", d=>d.r)
+  .attr("fill", d=>TYPES[d.type].color)
+  .attr("fill-opacity", 0.28)
+  .attr("stroke", d=>EVIDENCE[d.ev].color);
+
+nodeSel.append("text")
+  .attr("dy", d=>d.r+12)
+  .attr("text-anchor","middle")
+  .text(d=>d.label.length>28 ? d.label.slice(0,26)+"…" : d.label);
+
+svg.on("click", ()=>{ hideDetail(); clearHighlight(); });
+
+simulation.on("tick", ()=>{
+  linkSel.attr("x1", d=>d.source.x).attr("y1", d=>d.source.y)
+         .attr("x2", d=>d.target.x).attr("y2", d=>d.target.y);
+  linkLabelSel.attr("x", d=>(d.source.x+d.target.x)/2).attr("y", d=>(d.source.y+d.target.y)/2 - 3);
+  nodeSel.attr("transform", d=>`translate(${d.x},${d.y})`);
+});
+
+function render(){
+  const visibleIds = new Set(nodes.filter(nodeVisible).map(n=>n.id));
+  nodeSel.classed("dimmed", d=>!visibleIds.has(d.id));
+  linkSel.classed("dimmed", d=>{
+    const s = d.source.id||d.source, t = d.target.id||d.target;
+    return !(visibleIds.has(s) && visibleIds.has(t));
+  });
+  linkLabelSel.classed("dimmed", d=>{
+    const s = d.source.id||d.source, t = d.target.id||d.target;
+    return !(visibleIds.has(s) && visibleIds.has(t));
+  });
+}
+
+function highlight(d){
+  const neighborIds = new Set([d.id]);
+  links.forEach(l=>{
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    if(s===d.id) neighborIds.add(t);
+    if(t===d.id) neighborIds.add(s);
+  });
+  nodeSel.classed("dimmed", n=>!neighborIds.has(n.id));
+  linkSel.classed("dimmed", l=>{
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    return !(s===d.id || t===d.id);
+  });
+  linkLabelSel.classed("dimmed", l=>{
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    return !(s===d.id || t===d.id);
+  });
+}
+function clearHighlight(){ render(); }
+
+/* ---------------------------------------------------------------------
+   DETAIL PANEL
+--------------------------------------------------------------------- */
+function showDetail(d){
+  const panel = d3.select("#detail-panel");
+  const body = d3.select("#detail-body");
+  const evInfo = EVIDENCE[d.ev];
+  const connections = links.filter(l=>{
+    const s=l.source.id||l.source, t=l.target.id||l.target;
+    return s===d.id || t===d.id;
+  }).map(l=>{
+    const s=l.source.id||l.source, t=l.target.id||l.target;
+    const otherId = s===d.id ? t : s;
+    return `<b>${nodeById[otherId].label}</b> — ${l.label}`;
+  });
+
+  body.html(`
+    <h2>${d.label}</h2>
+    <div class="type-tag">${TYPES[d.type].label}</div>
+    <div class="ev-badge" style="background:${evInfo.color}22;color:${evInfo.color};border:1px solid ${evInfo.color}66;">${evInfo.label}</div>
+    <div class="desc">${d.desc}</div>
+    ${d.sources.length ? `<ul class="src-list">${d.sources.map(s=>`<li><a href="${s.u}" target="_blank" rel="noopener">${s.t}</a></li>`).join("")}</ul>` : ""}
+    ${connections.length ? `<div class="conn-list"><b style="color:var(--text)">Connections:</b><br>${connections.join("<br>")}</div>` : ""}
+  `);
+  panel.classed("show", true);
+}
+function hideDetail(){ d3.select("#detail-panel").classed("show", false); }
+d3.select("#detail-close").on("click", (ev)=>{ ev.stopPropagation(); hideDetail(); clearHighlight(); });
+
+/* ---------------------------------------------------------------------
+   TIMELINE VIEW
+--------------------------------------------------------------------- */
+const timelineData = [
+  {date:"2014–2018", label:"MECCA named to Best Places to Work list for five consecutive years", ev:"VERIFIED", src:"https://insideretail.com.au/news/mecca-loccitane-named-best-places-to-work-201808"},
+  {date:"2018", label:"@estéelaundry Instagram account created", ev:"VERIFIED", src:"https://www.smh.com.au/lifestyle/beauty/behind-the-anonymous-instagram-account-airing-the-beauty-industry-s-dirty-laundry-20191122-p53d5x.html"},
+  {date:"19 Feb 2019", label:"Mekuria v MECCA Brands FWC Full Bench decision (representation)", ev:"VERIFIED", src:"https://www.fwc.gov.au/representation-lawyers-and-paid-agents-0"},
+  {date:"Oct 2019", label:"@estéelaundry posts 50+ accounts alleging bullying, racism, favouritism", ev:"ALLEGED", src:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"},
+  {date:"17 Nov 2019", label:"SMH publishes detailed article naming Narita Salima", ev:"REPORTED", src:"https://www.smh.com.au/business/companies/its-all-fake-beauty-giant-mecca-facing-bullying-claims-20191117-p539q4.html"},
+  {date:"19 Nov 2019", label:"MECCA announces independent culture review, STOPLINE, training", ev:"VERIFIED", src:"https://au.finance.yahoo.com/news/mecca-investigation-011344896.html"},
+  {date:"22 Nov 2019", label:"SMH publishes profile of @estéelaundry account", ev:"REPORTED", src:"https://www.smh.com.au/lifestyle/beauty/behind-the-anonymous-instagram-account-airing-the-beauty-industry-s-dirty-laundry-20191122-p53d5x.html"},
+  {date:"9 Dec 2019", label:'Pedestrian.TV publishes employee scepticism ("Tegan" and "Lisa")', ev:"REPORTED", src:"https://www.pedestrian.tv/news/mecca-employees-zero-hope-review-alleged-bullying-will-bring-change/"},
+  {date:"Dec 2019–Jan 2020", label:"Culture review extended; findings never published", ev:"VERIFIED", src:null},
+  {date:"2020", label:"STOPLINE referenced in Modern Slavery Statement as ongoing channel", ev:"VERIFIED", src:"https://modernslaveryregister.gov.au/statements/7CwzBinQ2U2Esx7/pdf/"},
+  {date:"Mar 2023", label:"MECCA discloses $560,000 underpayment of ~1,600 staff, self-reports to FWO", ev:"VERIFIED", src:"https://www.afr.com/work-and-careers/workplace/beauty-giant-mecca-underpaid-staff-on-17-year-old-zombie-agreements-20230323-p5cuo3"},
+  {date:"Feb 2024", label:"Former head of brand marketing sues MECCA over maternity-leave redundancy", ev:"VERIFIED", src:"https://www.lawyerly.com.au/mecca-brands-used-maternity-leave-to-test-whether-execs-position-could-be-axed-lawsuit-says/"},
+  {date:"Mar 2024", label:"Maternity-leave lawsuit reported as settled", ev:"REPORTED", src:"https://www.linkedin.com/posts/angelica-snowden-15888466_ex-mecca-employee-settles-mat-leave-redundancy-activity-7169193238300483585-V-z8"},
+  {date:"5 Feb 2026", label:"YouTube documentary references legal actions in Federal Court and VCAT", ev:"REPORTED", src:"https://www.youtube.com/watch?v=0FT0X0Kw2fY"},
+  {date:"2 Mar 2026", label:"ASIC issues $594,000 in infringement notices to three MECCA entities", ev:"VERIFIED", src:"https://asic.gov.au/about-asic/news-centre/find-a-media-release/2026-releases/26-057mr-mecca-companies-pay-594-000-in-infringement-notices-for-failing-to-lodge-financial-reports-on-time/"},
+  {date:"3 Aug 2026", label:"Reddit boycott call against MECCA", ev:"SOCIAL", src:"https://www.reddit.com/r/AustralianMakeup/comments/1ve8s2d/be_part_of_the_change_join_the_mecca_bycott_today/"}
+];
+
+function buildTimeline(){
+  const wrap = d3.select("#timeline-view").append("div").attr("class","tl-wrap");
+  wrap.append("div").attr("class","tl-line");
+  const items = wrap.selectAll(".tl-item").data(timelineData).join("div").attr("class","tl-item");
+  items.append("div").attr("class","tl-date").text(d=>d.date);
+  const dotWrap = items.append("div").attr("class","tl-dot-wrap");
+  dotWrap.append("div").attr("class","tl-dot").style("background", d=>EVIDENCE[d.ev].color);
+  const content = items.append("div").attr("class","tl-content");
+  content.append("h4").text(d=>d.label);
+  content.append("p").html(d=>`Evidence class: <span style="color:${EVIDENCE[d.ev].color};font-weight:600;">${EVIDENCE[d.ev].label}</span>`);
+  content.filter(d=>d.src).append("a").attr("href",d=>d.src).attr("target","_blank").attr("rel","noopener").text("View source →");
+}
+buildTimeline();
+
+/* ---------------------------------------------------------------------
+   TABS
+--------------------------------------------------------------------- */
+d3.selectAll(".tab-btn").on("click", function(){
+  const view = d3.select(this).attr("data-view");
+  d3.selectAll(".tab-btn").classed("active", false);
+  d3.select(this).classed("active", true);
+  d3.select("#graph-view").style("display", view==="graph" ? "block":"none");
+  d3.select("#timeline-view").style("display", view==="timeline" ? "block":"none");
+});
+
+/* ---------------------------------------------------------------------
+   RESIZE
+--------------------------------------------------------------------- */
+window.addEventListener("resize", ()=>{
+  measure();
+  simulation.force("center", d3.forceCenter(width/2, height/2));
+  simulation.alpha(0.3).restart();
+});
+
+render();
+</script>
+</body>
+</html>
