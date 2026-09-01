@@ -6,10 +6,10 @@ const staticRoutes = [
   "/",
   "/accountability",
   "/analysis",
+  "/analysis/identity-inclusion",
   "/analysis/public-commentary",
   "/analysis/mecca-complaints-whistleblower-policy",
   "/analysis/working-at-mecca-reviews",
-  "/areas-of-inquiry",
   "/change-agenda",
   "/documentary",
   "/editorial-ethics",
@@ -36,6 +36,7 @@ const staticRoutes = [
   "/research-centre/workforce-financial-data",
   "/research-centre/workplace-law",
   "/share-story",
+  "/share-story/documentary",
   "/share-story/evidence",
   "/share-story/research-questionnaire",
   "/stories",
@@ -44,7 +45,7 @@ const staticRoutes = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date("2026-08-12T12:00:00+10:00");
+  const lastModified = new Date("2026-08-31T12:00:00+10:00");
   const dynamicRoutes = [
     ...categories.map(({ slug }) => `/employer-commitments/categories/${slug}`),
     ...documents.map(({ slug }) => `/employer-commitments/documents/${slug}`),

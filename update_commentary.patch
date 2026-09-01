@@ -1,0 +1,74 @@
+--- app/analysis/public-commentary/page.tsx
++++ app/analysis/public-commentary/page.tsx
+@@ -4,11 +4,59 @@
+ export const dynamic = "force-dynamic";
+ type Search = Promise<{ tag?: string }>;
+ 
++type ExtendedCommentary = PublishedCommentary & { caption?: string };
++
++const hardcodedRecords: ExtendedCommentary[] = [
++  {
++    id: "hc-1", platform: "Reddit", perspective: "positive", sourcePostedAt: "2019-01-01", capturedAt: new Date(),
++    publicExcerpt: "The training was so much fun, it was a really exciting time for me getting to play with makeup.",
++    topics: ["Training & development"], publishedAt: new Date(),
++    caption: "Self-described former worker, public Reddit comment, 2019. Account not independently verified."
++  },
++  {
++    id: "hc-2", platform: "Reddit", perspective: "critical", sourcePostedAt: "2023-01-01", capturedAt: new Date(),
++    publicExcerpt: "Training happened 6 months in. I got in trouble for things I did but no one had told me.",
++    topics: ["Training & development", "Management & leadership"], publishedAt: new Date(),
++    caption: "Self-described former worker, public Reddit comment, 2023. Account not independently verified."
++  },
++  {
++    id: "hc-3", platform: "Reddit", perspective: "positive", sourcePostedAt: "2019-01-01", capturedAt: new Date(),
++    publicExcerpt: "I've been shown nothing but love and empathy.",
++    topics: ["Management & leadership", "Psychological safety"], publishedAt: new Date(),
++    caption: "Self-described worker discussing local management support, public Reddit comment, 2019. Account not independently verified."
++  },
++  {
++    id: "hc-4", platform: "Reddit", perspective: "positive", sourcePostedAt: "2020-01-01", capturedAt: new Date(),
++    publicExcerpt: "My favourite part of the job was the customers, everyday was so different.",
++    topics: ["Customer-facing work"], publishedAt: new Date(),
++    caption: "Self-described former worker, public Reddit comment, 2020. Account not independently verified."
++  },
++  {
++    id: "hc-5", platform: "Indeed", perspective: "positive", sourcePostedAt: "2024-01-01", capturedAt: new Date(),
++    publicExcerpt: "Workplace culture is immensely supportive and I built many lasting friendships during my time in Mecca.",
++    topics: ["Team culture"], publishedAt: new Date(),
++    caption: "Former worker review, public employee-review site, 2024. Account not independently verified."
++  },
++  {
++    id: "hc-6", platform: "Reddit", perspective: "critical", sourcePostedAt: "2021-01-01", capturedAt: new Date(),
++    publicExcerpt: "It feels a lot like favouritism masked as visibility.",
++    topics: ["Career progression", "Management & leadership"], publishedAt: new Date(),
++    caption: "Self-described worker discussing progression, public Reddit comment, 2021. Account not independently verified."
++  },
++  {
++    id: "hc-7", platform: "Reddit", perspective: "critical", sourcePostedAt: "2026-01-01", capturedAt: new Date(),
++    publicExcerpt: "Casual Mecca workers these days aren't getting as many hours/inconsistent hours.",
++    topics: ["Workload & staffing", "Work-life balance"], publishedAt: new Date(),
++    caption: "Public Reddit comment discussing casual employment, 2026. Employment status not independently verified."
++  },
++  {
++    id: "hc-8", platform: "Indeed", perspective: "critical", sourcePostedAt: "2025-01-01", capturedAt: new Date(),
++    publicExcerpt: "Not enough training but inflated expectations.",
++    topics: ["Training & development", "Management & leadership"], publishedAt: new Date(),
++    caption: "Worker review, public employee-review site, 2025. Account not independently verified."
++  }
++];
++
+ export default async function PublicCommentaryPage({ searchParams }: { searchParams: Search }) {
+   const query = await searchParams;
+-  let records: PublishedCommentary[] = [];
++  let records: ExtendedCommentary[] = [];
+   try {
+     records = await fetchPublishedCommentary();
+   } catch (error) {
+     if (!(error instanceof CommentaryConfigurationError)) throw error;
+   }
++  
++  const existingExcerpts = new Set(records.map(r => r.publicExcerpt.trim().toLowerCase()));
++  const uniqueAdditional = hardcodedRecords.filter(r => !existingExcerpts.has(r.publicExcerpt.trim().toLowerCase()));
++  records = [...records, ...uniqueAdditional];
++
+   const selectedTag = commentaryTags.includes(query.tag as typeof commentaryTags[number]) ? query.tag : "";

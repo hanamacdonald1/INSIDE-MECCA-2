@@ -11,7 +11,11 @@ import {
   themes,
 } from "../../share-story/research-questionnaire/config";
 
-const recipient = process.env.SUBMISSION_EMAIL || "insidemecca@mail2australia.com";
+const primaryRecipient = process.env.SUBMISSION_EMAIL || "shareyourstory@insidemecca.net";
+const backupRecipient = process.env.SUBMISSION_BACKUP_EMAIL || "insidemecca@mail2australia.net";
+const recipients = Array.from(
+  new Set([primaryRecipient, backupRecipient].map((value) => value.trim()).filter(Boolean)),
+);
 const sender = process.env.SUBMISSION_FROM || "Inside MECCA Submissions <submissions@send.insidemecca.net>";
 const supabaseUrl = "https://xfoobfssfufhbgcxhbpm.supabase.co";
 const maximumRequestBytes = 100_000;
@@ -221,7 +225,7 @@ export async function POST(request: Request) {
     try {
       const emailPayload: Record<string, unknown> = {
         from: sender,
-        to: [recipient],
+        to: recipients,
         subject: `Confidential contributor account ${stored.submission_ref}`,
         text: buildCanonicalQuestionnaire(payload, stored),
       };

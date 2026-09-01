@@ -1,5 +1,17 @@
 export const analysisEntries = [
   {
+    slug: "identity-inclusion",
+    title: "Identity, inclusion and workplace experience at MECCA",
+    shortTitle: "Identity, inclusion and workplace experience",
+    description: "An evidence-led examination of reported experiences involving appearance, race, disability, belonging, progression and speaking up.",
+    excerpt: "Public workplace accounts raise questions about whether identity, presentation, disability and belonging can affect people’s experiences at MECCA. This page organises reported concerns without treating unverified accounts as established facts.",
+    published: "2026-08-23",
+    updated: "2026-08-23",
+    displayDate: "23 August 2026",
+    readingTime: "6 minute read",
+    category: "Workplace culture analysis",
+  },
+  {
     slug: "mecca-complaints-whistleblower-policy",
     title: "What do MECCA's public complaints and whistleblower policies say?",
     shortTitle: "MECCA complaints and whistleblower policy",

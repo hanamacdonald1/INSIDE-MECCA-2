@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-// When npm run dev is invoked with --port 3000, npm may forward arguments.
-// Spawn Next.js dev server explicitly on port 3000, binding to 0.0.0.0.
-const child = spawn("npx", ["next", "dev", "-p", "3000", "-H", "0.0.0.0"], {
+// Always launch the Next.js version installed by this project. Using npx here can
+// download a newer binary that is incompatible with the local Next.js modules.
+const nextCli = fileURLToPath(new URL("./node_modules/next/dist/bin/next", import.meta.url));
+const child = spawn(process.execPath, [nextCli, "dev", "-p", "3000", "-H", "0.0.0.0"], {
   stdio: "inherit",
-  shell: true,
+  shell: false,
 });
 
 child.on("exit", (code) => {

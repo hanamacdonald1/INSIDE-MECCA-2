@@ -1,4 +1,7 @@
 "use client";
+
+
+
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { categories, documents } from "./employer-commitments/data";
@@ -7,7 +10,7 @@ import { corporateHistory, internalDocuments, legalTopics, publicClaims } from "
 type SearchItem={title:string;description:string;href:string;type:string;keywords?:string};
 const pages:SearchItem[]=[
   {title:"Home",description:"Inside MECCA workplace investigation",href:"/",type:"Page",keywords:"contact faq source safety privacy"},
-  {title:"Project Accountability",description:"Founder context, anonymity, conflicts, funding disclosure and challenge process",href:"/accountability",type:"Governance",keywords:"who runs founder identity bias independence advocacy correction"},
+  {title:"Project Accountability",description:"Creator context, anonymity, conflicts, funding disclosure and challenge process",href:"/accountability",type:"Governance",keywords:"who runs creator identity bias independence advocacy correction"},
   {title:"Investigation",description:"Scope, accountability framework and research questions",href:"/investigation",type:"Page",keywords:"promise practice pattern response finding"},
   {title:"Development Planning Guidebook review status",description:"Why the supplied source and source-derived analysis are withheld pending qualified legal review",href:"/investigation/development-planning",type:"Investigation",keywords:"development planning guidebook internal document legal review provenance publication hold"},
   {title:"Research Centre",description:"Evidence archive and source register",href:"/research-centre",type:"Research hub"},
@@ -32,7 +35,7 @@ const pages:SearchItem[]=[
   {title:"Editorial Standards",description:"Attribution, verification and corrections standards",href:"/editorial-ethics",type:"Policy"},
   {title:"Legal and Publication Policy",description:"Publication safeguards, legal review and right of reply",href:"/legal-publication-policy",type:"Policy"},
   {title:"Share Your Story",description:"Confidential contributor submission form",href:"/share-story",type:"Contribute",keywords:"submission account evidence confidentiality contact"},
-  {title:"Areas of Inquiry",description:"Workplace topics guiding the investigation",href:"/areas-of-inquiry",type:"Research"},
+  {title:"Research Questions",description:"Workplace topics and core questions guiding the investigation",href:"/investigation#research-questions",type:"Investigation",keywords:"areas of inquiry topics research questions culture management progression speaking up"},
   {title:"Change Agenda",description:"Potential evidence-led workplace reforms",href:"/change-agenda",type:"Campaign"},
   {title:"Documentary interview",description:"Interview choices, consent and next steps",href:"/documentary",type:"Project"},
   {title:"Get involved",description:"Contribute, collaborate or share responsibly",href:"/join-movement",type:"Participate"},
@@ -46,9 +49,10 @@ const generated:SearchItem[]=[
 ];
 const index=[...pages,...generated];
 
+
 export function GlobalSearch(){
   const [query,setQuery]=useState(""); const [open,setOpen]=useState(false); const wrap=useRef<HTMLDivElement>(null);
   useEffect(()=>{const close=(e:MouseEvent)=>{if(!wrap.current?.contains(e.target as Node))setOpen(false)};document.addEventListener("mousedown",close);return()=>document.removeEventListener("mousedown",close)},[]);
   const results=useMemo(()=>{const q=query.trim().toLowerCase();if(q.length<2)return[];return index.map(item=>{const title=item.title.toLowerCase(),text=`${item.title} ${item.description} ${item.type} ${item.keywords||""}`.toLowerCase();const score=title===q?100:title.startsWith(q)?50:title.includes(q)?25:text.includes(q)?10:0;return{item,score}}).filter(x=>x.score).sort((a,b)=>b.score-a.score||a.item.title.localeCompare(b.item.title)).slice(0,8).map(x=>x.item)},[query]);
-  return <div className="rb-global-search" ref={wrap} onKeyDown={e=>{if(e.key==="Escape")setOpen(false)}}><label><span className="sr-only">Search the entire website</span><input type="search" value={query} onChange={e=>{setQuery(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)} placeholder="Search the entire site" aria-expanded={open&&query.length>=2} aria-controls="global-search-results" /></label>{open&&query.length>=2&&<div className="rb-search-results" id="global-search-results"><div className="rb-search-summary">{results.length?`${results.length} best matches`:"No matching pages"}</div>{results.map(item=><Link href={item.href} key={`${item.href}-${item.title}`} onClick={()=>setOpen(false)}><span>{item.type}</span><strong>{item.title}</strong><small>{item.description}</small></Link>)}{!results.length&&<p>Try a topic, document name, evidence reference or page title.</p>}</div>}</div>;
+  return <div className="rb-global-search" ref={wrap} onKeyDown={e=>{if(e.key==="Escape")setOpen(false)}}><label><span className="sr-only">Search the entire website</span><div className="relative"><svg xmlns="http://www.w3.org/2000/svg" className="absolute left-2.5 top-2.5 h-4 w-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><input type="search" value={query} onChange={e=>{setQuery(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)} placeholder="Search the site..." aria-controls="global-search-results" className="pl-9" /></div></label>{open&&query.length>=2&&<div className="rb-search-results" id="global-search-results"><div className="rb-search-summary">{results.length?`${results.length} best matches`:"No matching pages"}</div>{results.map(item=><Link href={item.href} key={`${item.href}-${item.title}`} onClick={()=>setOpen(false)}><span>{item.type}</span><strong>{item.title}</strong><small>{item.description}</small></Link>)}{!results.length&&<p>Try a topic, document name, evidence reference or page title.</p>}</div>}</div>;
 }

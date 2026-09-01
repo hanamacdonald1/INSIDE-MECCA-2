@@ -19,6 +19,7 @@ export const commentaryTags = [
   "Inclusion & accessibility",
   "Team culture",
   "Work-life balance",
+  "Customer-facing work",
 ] as const;
 
 export type CommentaryPlatform = typeof commentaryPlatforms[number];
